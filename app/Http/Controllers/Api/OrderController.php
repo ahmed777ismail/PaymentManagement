@@ -71,6 +71,7 @@ class OrderController extends Controller
     public function destroy(Order $order): JsonResponse
     {
         $this->authorizeOrderOwner($order);
+        abort_if($order->payments()->exists(), 409, 'Orders with associated payments cannot be deleted.');
 
         $order->delete();
 
