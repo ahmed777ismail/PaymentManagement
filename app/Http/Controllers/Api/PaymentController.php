@@ -32,7 +32,7 @@ class PaymentController extends Controller
         Order $order,
         ProcessPaymentAction $processPayment,
     ): JsonResponse {
-        $this->authorizeOrderOwner($order);
+        $this->authorize('processPayment', $order);
 
         $payment = $processPayment->execute($order, $request->validated());
 
@@ -43,7 +43,7 @@ class PaymentController extends Controller
 
     public function forOrder(Order $order): AnonymousResourceCollection
     {
-        $this->authorizeOrderOwner($order);
+        $this->authorize('viewPayments', $order);
 
         return PaymentResource::collection(
             $order->payments()->latest()->paginate((int) request('per_page', 15))
@@ -53,13 +53,8 @@ class PaymentController extends Controller
     public function show(Payment $payment): PaymentResource
     {
         $payment->load('order');
-        abort_if($payment->order->user_id !== auth('api')->id(), 404);
+        $this->authorize('view', $payment);
 
         return new PaymentResource($payment);
-    }
-
-    private function authorizeOrderOwner(Order $order): void
-    {
-        abort_if($order->user_id !== auth('api')->id(), 404);
     }
 }

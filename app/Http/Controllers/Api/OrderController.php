@@ -41,7 +41,7 @@ class OrderController extends Controller
 
     public function show(Order $order): OrderResource
     {
-        $this->authorizeOrderOwner($order);
+        $this->authorize('view', $order);
 
         return new OrderResource($order->load('items'));
     }
@@ -51,7 +51,7 @@ class OrderController extends Controller
         Order $order,
         UpdateOrderAction $updateOrder,
     ): OrderResource {
-        $this->authorizeOrderOwner($order);
+        $this->authorize('update', $order);
 
         return new OrderResource($updateOrder->execute($order, $request->validated()));
     }
@@ -61,7 +61,7 @@ class OrderController extends Controller
         Order $order,
         UpdateOrderStatusAction $updateOrderStatus,
     ): OrderResource {
-        $this->authorizeOrderOwner($order);
+        $this->authorize('update', $order);
 
         $status = OrderStatus::from($request->validated('status'));
 
@@ -70,16 +70,11 @@ class OrderController extends Controller
 
     public function destroy(Order $order): JsonResponse
     {
-        $this->authorizeOrderOwner($order);
+        $this->authorize('delete', $order);
         abort_if($order->payments()->exists(), 409, 'Orders with associated payments cannot be deleted.');
 
         $order->delete();
 
         return response()->json(status: 204);
-    }
-
-    private function authorizeOrderOwner(Order $order): void
-    {
-        abort_if($order->user_id !== auth('api')->id(), 404);
     }
 }
